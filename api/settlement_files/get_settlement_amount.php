@@ -3,7 +3,6 @@ require '../../ajaxconfig.php';
 
 $id = $_POST['id'];
 $auction_id = $_POST['auction_id'];
-$share_id = $_POST['share_id'];
 $qry = $pdo->query("SELECT 
             ad.id,
             gc.chit_value,
@@ -19,7 +18,7 @@ $qry = $pdo->query("SELECT
     ad.cus_name = gs.cus_mapping_id
     LEFT JOIN customer_creation cc ON
     gs.cus_id = cc.id
-        WHERE cc.id = '$id' AND ad.id ='$auction_id' AND gs.id = '$share_id' ");
+        WHERE cc.id = '$id' AND ad.id ='$auction_id'");
 
 if ($qry->rowCount() > 0) {
     $result = $qry->fetchAll(PDO::FETCH_ASSOC);
