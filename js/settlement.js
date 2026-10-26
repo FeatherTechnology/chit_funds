@@ -224,15 +224,11 @@ $(document).ready(function () {
     // });
     $('#customer_name').on('change', function () {
         const customerId = $(this).val();
-        let selectedOption = $(this).find('option:selected');
-        let shareId = selectedOption.data('share-id') || '';
-        $('#share_id').val(shareId);
-          console.log('Customer ID:', $(this).val());
-    console.log('Share ID:', shareId);
         if (customerId && customerId !== 'null') {
             // Fetch the guarantor relationship if a valid ID is selected
             editCustomerCreation(customerId)
             getGuarantorRelationship(customerId)
+            fetchSettlementData(customerId)
             //checkBalance()
             setTimeout(function () {
                 getDocInfoTable();
@@ -371,17 +367,17 @@ $(document).ready(function () {
 
     });
 
-    $('#submit_settle_info').click(function (event) {
-        event.preventDefault();
-        let $btn = $(this);
-        // Prevent duplicate clicks
-        if ($btn.prop('disabled')) {
-            return;
-        }
-        // Disable button
-        $btn.prop('disabled', true).text('Submitting...');
-        // Create FormData
-        let settleInfo = new FormData();
+$('#submit_settle_info').click(function (event) {
+    event.preventDefault();
+    let $btn = $(this);
+    // Prevent duplicate clicks
+    if ($btn.prop('disabled')) {
+        return;
+    }
+    // Disable button
+    $btn.prop('disabled', true).text('Submitting...');
+    // Create FormData
+    let settleInfo = new FormData();
 
         // Append all your form fields to the FormData object
         settleInfo.append('auction_id', $('#groupid').val());
@@ -437,45 +433,45 @@ $(document).ready(function () {
         // Validate the form data
         let isValid = isFormDataValid(settleInfo) && isUploadValid;
 
-        if (!isValid) {
-            swalError('Warning', 'Please fill all the fields.');
-            $btn.prop('disabled', false).text('Submit');
-            return;
-        }
+    if (!isValid) {
+        swalError('Warning', 'Please fill all the fields.');
+        $btn.prop('disabled', false).text('Submit');
+        return;
+    }
 
-        $.ajax({
-            url: 'api/settlement_files/submit_settlement_info.php',
-            type: 'POST',
-            data: settleInfo,
-            processData: false,
-            contentType: false,
+    $.ajax({
+        url: 'api/settlement_files/submit_settlement_info.php',
+        type: 'POST',
+        data: settleInfo,
+        processData: false,
+        contentType: false,
 
-            success: function (response) {
-                if (response == '1') {
-                    swalSuccess('Success', 'Settlement Successfully');
+        success: function (response) {
+            if (response == '1') {
+                swalSuccess('Success', 'Settlement Successfully');
 
-                    $('.settlement_table_content').show();
-                    $('#settlement_content, .back_btn').hide();
+                $('.settlement_table_content').show();
+                $('#settlement_content, .back_btn').hide();
 
-                    getSettlementTable();
+                getSettlementTable();
 
-                    $('#groupid').val('');
-                    $('#settlement_screen').trigger('reset');
-                } else {
-                    swalError('Warning', 'Settlement Failed.');
-                }
-            },
-
-            error: function (xhr, status, error) {
-                swalError('Error', 'An error occurred while submitting the settlement info: ' + error);
-            },
-
-            complete: function () {
-                // Re-enable button after request finishes
-                $btn.prop('disabled', false).text('Submit');
+                $('#groupid').val('');
+                $('#settlement_screen').trigger('reset');
+            } else {
+                swalError('Warning', 'Settlement Failed.');
             }
-        });
+        },
+
+        error: function (xhr, status, error) {
+            swalError('Error', 'An error occurred while submitting the settlement info: ' + error);
+        },
+
+        complete: function () {
+            // Re-enable button after request finishes
+            $btn.prop('disabled', false).text('Submit');
+        }
     });
+});
 
 
 
@@ -572,15 +568,15 @@ $(document).ready(function () {
     ////////////////////////Document End/////////////////////////////////////////////
 
     ///////////////////////Auction Info START //////////////////////////////
-    $('#auction_info').click(function () {
+    $('#auction_info').click(function(){
         event.preventDefault();
         $('#add_Calculation_modal').modal('show');
 
         let auctionData = {
-            'group_id': $('#group_id').val(),
-            'date': $('#auction_date').val()
+            'group_id' : $('#group_id').val(),
+            'date' : $('#auction_date').val()
         }
-
+    
         $.ajax({
             url: 'api/auction_files/fetch_calculation_data.php',
             type: 'POST',
@@ -589,10 +585,10 @@ $(document).ready(function () {
             success: function (response) {
                 $('#calc_group_name').val(response.group_name);
                 $('#calc_auction_month').val(response.auction_month);
-
+    
                 // Format the date in dd-mm-yyyy format
                 $('#cal_date').val(formatDate(new Date(response.cal_date)));
-
+    
                 $('#calc_chit_value').val(moneyFormatIndia(response.chit_value));
                 $('#calc_auction_value').val(moneyFormatIndia(response.auction_value));
                 $('#calc_commission').val(moneyFormatIndia(response.commission));
@@ -870,8 +866,7 @@ function formatDate(date) {
 
 function fetchSettlementData(id) {
     let auction_id = $('#groupid').val();
-    let share_id = $('#share_id').val();
-    $.post('api/settlement_files/get_settlement_amount.php', { id: id, auction_id: auction_id,share_id: share_id }, function (response) {
+    $.post('api/settlement_files/get_settlement_amount.php', { id: id, auction_id: auction_id }, function (response) {
         if (response.length > 0) {
             // Assuming `response` is an array and we need the first object's `settlement_amount`
             let settlement_amount = response[0].settlement_amount;
@@ -1131,11 +1126,10 @@ function getCashAck() {
 function checkBalance() {
     let auction_id = $('#groupid').val();
     let cus_id = $('#cus_id').val();
-    let share_id = $('#share_id').val();
     $.ajax({
         url: 'api/settlement_files/get_balance_amount.php',
         type: 'POST',
-        data: { "auction_id": auction_id, 'cus_id': cus_id, 'share_id': share_id },
+        data: { "auction_id": auction_id, 'cus_id': cus_id },
         dataType: 'json',
         success: function (response) {
             if (response && response.balance_amount !== undefined) {
@@ -1428,24 +1422,13 @@ function getCustomerName(id) {
 
         $.each(response, function (index, val) {
             let editGId = $('#custom_name_edit').val();
-
             if (val.share_percent == 100) {
                 isSharePercent100 = true;
                 selectedCusName = val.cus_name;
                 selectedCusId = val.id;
-
-                // Store share_id for 100% customer
-                $('#share_id').val(val.share_id);
-
             } else {
                 let selected = (val.id == editGId) ? 'selected' : '';
-
-                appendCusOption +=
-                    "<option value='" + val.id + "' " +
-                    "data-share-id='" + val.share_id + "' " +
-                    selected + ">" +
-                    val.cus_name + " (" + val.share_percent + "%)" +
-                    "</option>";
+                appendCusOption += "<option value='" + val.id + "' " + selected + ">" + val.cus_name + "</option>";
             }
         });
 
@@ -1467,9 +1450,6 @@ function getCustomerName(id) {
             }
         } else {
             $('#customer_name').attr('disabled', false).empty().append(appendCusOption);
-            let selectedOption = $('#customer_name option:selected');
-
-            $('#share_id').val(selectedOption.data('share-id') || '');
         }
     }, 'json');
 }

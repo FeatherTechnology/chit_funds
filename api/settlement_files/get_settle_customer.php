@@ -10,8 +10,7 @@ if (is_numeric($id)) {
         SELECT 
             cc.id,
             CONCAT(cc.first_name, ' ', cc.last_name) AS cus_name,
-            gs.share_percent,
-            gs.id AS share_id
+            gs.share_percent
         FROM 
             auction_details ad
         LEFT JOIN group_share gs ON ad.cus_name = gs.cus_mapping_id 
@@ -19,7 +18,7 @@ if (is_numeric($id)) {
         WHERE 
             ad.id = '$id'
         GROUP BY 
-            gs.id
+            cc.id
     ");
 
     if ($qry->rowCount() > 0) {
